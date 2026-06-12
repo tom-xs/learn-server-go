@@ -21,6 +21,7 @@ func handleHealthz(writer http.ResponseWriter, req *http.Request) {
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Printf("Unable to connect DB: %v", err)
@@ -31,13 +32,16 @@ func main() {
 	apiCfg := apiConfig{
 		atomic.Int32{},
 		dbQueries,
+		platform,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir(".")))))
-	mux.HandleFunc("POST /admin/reset/", apiCfg.handleMetricsReset)
-	mux.HandleFunc("GET /admin/metrics/", apiCfg.handleMetrics)
 	mux.HandleFunc("GET /api/healthz/", handleHealthz)
+	mux.HandleFunc("GET /admin/metrics/", apiCfg.handleMetrics)
+	mux.HandleFunc("POST /admin/reset/", apiCfg.handleReset)
 	mux.HandleFunc("POST /api/validate_chirp/", respondJsonPost)
+	mux.HandleFunc("POST /api/users/", apiCfg.handleUserCreation)
+
 	server := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,

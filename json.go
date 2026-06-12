@@ -47,7 +47,7 @@ func respondJsonPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, jsonResponse{
+	respondWithJson(w, http.StatusOK, jsonResponse{
 		CleanedBody: filterProfane(req.Body),
 	})
 }
@@ -60,7 +60,7 @@ func validateChirp(body string) error {
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
-	respondWithJSON(w, code, errorResponse{
+	respondWithJson(w, code, errorResponse{
 		Error: msg,
 	})
 }
@@ -82,7 +82,7 @@ func filterProfane(msg string) string {
 	return strings.Join(filteredMsg, " ")
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload any) {
+func respondWithJson(w http.ResponseWriter, code int, payload any) {
 	response, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("Error marshaling JSON: %v", err)

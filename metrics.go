@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"sync/atomic"
 
@@ -11,6 +12,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQuery        *database.Queries
+	platform       string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -20,10 +22,22 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	})
 }
 
-func (cfg *apiConfig) handleMetricsReset(writer http.ResponseWriter, req *http.Request) {
-	writer.WriteHeader(http.StatusOK)
+func (cfg *apiConfig) handleReset(w http.ResponseWriter, r *http.Request) {
+	if cfg.platform != "dev" {
+		w.WriteHeader(http.StatusForbidden)
+		log.Printf("Platform not available for request")
+		return
+	}
+
+	if err := cfg.dbQuery.DeleteUsers(r.Context()); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Something wrong happened while reseting users db: %v", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 	cfg.fileserverHits.Store(0)
-	writer.Write([]byte("Hits reset"))
+	w.Write([]byte("Server fully reset"))
 }
 
 func (cfg *apiConfig) handleMetrics(writer http.ResponseWriter, req *http.Request) {
