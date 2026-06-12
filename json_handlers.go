@@ -35,7 +35,7 @@ func respondJsonPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqBody, err := validateChirp(req.Body)
+	err := validateChirp(req.Body)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLongChirp):
@@ -48,15 +48,15 @@ func respondJsonPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, jsonResponse{
-		CleanedBody: filterProfane(reqBody),
+		CleanedBody: filterProfane(req.Body),
 	})
 }
 
-func validateChirp(body string) (string, error) {
+func validateChirp(body string) error {
 	if len(body) > 140 {
-		return "", ErrLongChirp
+		return ErrLongChirp
 	}
-	return body, nil
+	return nil
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
@@ -82,7 +82,7 @@ func filterProfane(msg string) string {
 	return strings.Join(filteredMsg, " ")
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+func respondWithJSON(w http.ResponseWriter, code int, payload any) {
 	response, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("Error marshaling JSON: %v", err)

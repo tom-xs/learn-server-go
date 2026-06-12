@@ -1,8 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
+	"os"
+	"sync/atomic"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"github.com/tom-xs/learn-server-go/internal/database"
 )
 
 func handleHealthz(writer http.ResponseWriter, req *http.Request) {
@@ -12,8 +19,19 @@ func handleHealthz(writer http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Printf("Unable to connect DB: %v", err)
+	}
+	dbQueries := database.New(db)
+
 	const port = "8080"
-	apiCfg := apiConfig{}
+	apiCfg := apiConfig{
+		atomic.Int32{},
+		dbQueries,
+	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir(".")))))
 	mux.HandleFunc("POST /admin/reset/", apiCfg.handleMetricsReset)
