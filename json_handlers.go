@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"slices"
+	"strings"
 )
 
 var ErrLongChirp = errors.New("Chirp exceeds 140 length")
@@ -17,8 +19,8 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
-type validResponse struct {
-	Valid bool `json:"valid"`
+type jsonResponse struct {
+	CleanedBody string `json:"cleaned_body"`
 }
 
 func respondJsonPost(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +35,7 @@ func respondJsonPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := validateChirp(req.Body)
+	reqBody, err := validateChirp(req.Body)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLongChirp):
@@ -45,22 +47,39 @@ func respondJsonPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, validResponse{
-		Valid: true,
+	respondWithJSON(w, http.StatusOK, jsonResponse{
+		CleanedBody: filterProfane(reqBody),
 	})
 }
 
-func validateChirp(body string) error {
+func validateChirp(body string) (string, error) {
 	if len(body) > 140 {
-		return ErrLongChirp
+		return "", ErrLongChirp
 	}
-	return nil
+	return body, nil
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	respondWithJSON(w, code, errorResponse{
 		Error: msg,
 	})
+}
+
+func filterProfane(msg string) string {
+	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
+
+	splitMsg := strings.Split(msg, " ")
+	var filteredMsg []string
+
+	for idx, word := range splitMsg {
+		lowerCasedWord := strings.ToLower(word)
+		if slices.Contains(profaneWords, lowerCasedWord) {
+			filteredMsg = append(filteredMsg, "****")
+		} else {
+			filteredMsg = append(filteredMsg, splitMsg[idx])
+		}
+	}
+	return strings.Join(filteredMsg, " ")
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
