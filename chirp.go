@@ -71,8 +71,17 @@ func (cfg *apiConfig) handleChirpCreation(w http.ResponseWriter, r *http.Request
 	})
 }
 
-func handleChirpRequest(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handleChirpRequest(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 
+	chirps, err := cfg.dbQuery.GetAllChirps(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error requesting chirps to DB: %v", err)
+		return
+	}
+
+	respondWithJsonArray(w, http.StatusOK, chirps)
 }
 
 func validateChirp(body string) error {

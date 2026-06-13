@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/tom-xs/learn-server-go/internal/database"
 )
 
 type chirpRequest struct {
@@ -58,6 +60,32 @@ func filterProfane(msg string) string {
 		}
 	}
 	return strings.Join(filteredMsg, " ")
+}
+
+func respondWithJsonArray(w http.ResponseWriter, code int, payload []database.Chirp) {
+	responseArray := make([]chirpResponse, 0, len(payload))
+
+	for _, p := range payload {
+		response := chirpResponse{
+			ID:        p.ID,
+			Body:      p.Body,
+			CreatedAt: p.CreatedAt,
+			UpdatedAt: p.UpdatedAt,
+			UserID:    p.UserID,
+		}
+		responseArray = append(responseArray, response)
+	}
+
+	data, err := json.Marshal(responseArray)
+	if err != nil {
+		log.Printf("Error marshaling JSON: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(data)
 }
 
 func respondWithJson(w http.ResponseWriter, code int, payload any) {

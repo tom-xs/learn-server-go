@@ -16,7 +16,7 @@ VALUES(
 RETURNING *;
 
 -- name: GetAllChirps :many
-SELECT * from chirp;
+SELECT * from chirp ORDER BY created_at;
 
 -- name: DeleteChirps :exec
 DELETE FROM chirp;
