@@ -36,7 +36,8 @@ func main() {
 	mux.HandleFunc("POST /api/validate_chirp/", respondJsonPost)
 	mux.HandleFunc("POST /api/users/", apiCfg.handleUserCreation)
 	mux.HandleFunc("POST /api/chirps/", apiCfg.handleChirpCreation)
-	mux.HandleFunc("GET /api/chirps/", apiCfg.handleChirpRequest)
+	mux.HandleFunc("GET /api/chirps/", apiCfg.handleAllChirpRequest)
+	mux.HandleFunc("GET /api/chirps/{id}", apiCfg.handleChirpRequest)
 
 	server := &http.Server{
 		Addr:    ":" + port,

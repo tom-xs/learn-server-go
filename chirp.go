@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"log"
@@ -72,6 +73,43 @@ func (cfg *apiConfig) handleChirpCreation(w http.ResponseWriter, r *http.Request
 }
 
 func (cfg *apiConfig) handleChirpRequest(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	uuidString := r.PathValue("id")
+
+	if uuidString == "" {
+		w.WriteHeader(http.StatusNotFound)
+		log.Printf("Chirp related to given UUID not found")
+		return
+	}
+
+	uuid, err := uuid.Parse(uuidString)
+	if err != nil {
+		return
+	}
+
+	chirp, err := cfg.dbQuery.GetChirp(r.Context(), uuid)
+	switch {
+	case err == sql.ErrNoRows:
+		w.WriteHeader(http.StatusNotFound)
+		log.Printf("Chirp with corresponding UUID not found: %v", err)
+		return
+	case err != nil:
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error requesting chirp to DB: %v", err)
+		return
+	}
+
+	respondWithJson(w, http.StatusOK, chirpResponse{
+		ID:        chirp.ID,
+		Body:      chirp.Body,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		UserID:    chirp.UserID,
+	})
+}
+
+func (cfg *apiConfig) handleAllChirpRequest(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	chirps, err := cfg.dbQuery.GetAllChirps(r.Context())
