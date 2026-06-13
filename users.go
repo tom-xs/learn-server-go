@@ -9,10 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type userRequest struct {
-	Email string `json:"email"`
-}
-
 type userResponse struct {
 	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -21,6 +17,11 @@ type userResponse struct {
 }
 
 func (cfg *apiConfig) handleUserCreation(w http.ResponseWriter, r *http.Request) {
+
+	type userRequest struct {
+		Email string `json:"email"`
+	}
+
 	defer r.Body.Close()
 
 	var email userRequest
