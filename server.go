@@ -12,12 +12,6 @@ import (
 	"github.com/tom-xs/learn-server-go/internal/database"
 )
 
-func handleHealthz(writer http.ResponseWriter, req *http.Request) {
-	req.Header.Set("Content-Type", "text/plain; charset=utf-8")
-	writer.WriteHeader(http.StatusOK)
-	writer.Write([]byte("OK"))
-}
-
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")

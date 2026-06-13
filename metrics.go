@@ -15,6 +15,12 @@ type apiConfig struct {
 	platform       string
 }
 
+func handleHealthz(writer http.ResponseWriter, req *http.Request) {
+	req.Header.Set("Content-Type", "text/plain; charset=utf-8")
+	writer.WriteHeader(http.StatusOK)
+	writer.Write([]byte("OK"))
+}
+
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cfg.fileserverHits.Add(1)
