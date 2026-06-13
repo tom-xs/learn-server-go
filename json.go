@@ -2,14 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
 	"slices"
 	"strings"
 )
-
-var ErrLongChirp = errors.New("Chirp exceeds 140 length")
 
 type chirpRequest struct {
 	Body string `json:"body"`
@@ -35,28 +32,9 @@ func respondJsonPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := validateChirp(req.Body)
-	if err != nil {
-		switch {
-		case errors.Is(err, ErrLongChirp):
-			respondWithError(w, http.StatusBadRequest, "Chirp is too long")
-		default:
-			log.Printf("Unexpected validation error: %v", err)
-			respondWithError(w, http.StatusInternalServerError, "Something went wrong")
-		}
-		return
-	}
-
 	respondWithJson(w, http.StatusOK, jsonResponse{
 		CleanedBody: filterProfane(req.Body),
 	})
-}
-
-func validateChirp(body string) error {
-	if len(body) > 140 {
-		return ErrLongChirp
-	}
-	return nil
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
