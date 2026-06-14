@@ -52,10 +52,10 @@ func (cfg *apiConfig) handleMetrics(writer http.ResponseWriter, req *http.Reques
 
 	hits := cfg.fileserverHits.Load()
 	msg := fmt.Sprintf(`<html>
-  <body>
-    <h1>Welcome, Chirpy Admin</h1>
-    <p>Chirpy has been visited %d times!</p>
-  </body>
-</html>`, hits)
+		<body>
+		<h1>Welcome, Chirpy Admin</h1>
+		<p>Chirpy has been visited %d times!</p>
+		</body>
+		</html>`, hits)
 	writer.Write([]byte(msg))
 }
