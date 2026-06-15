@@ -31,7 +31,7 @@ func (cfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userExists, err := auth.CheckPassword(loginInfo.Password, user.HashedPassword)
+	userExists, err := auth.CheckPasswordHash(loginInfo.Password, user.HashedPassword)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Error while validating/hashing password: %v", err)
