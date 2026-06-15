@@ -15,9 +15,14 @@ VALUES(
 )
 RETURNING *;
 
+-- name: UpdateUser :one
+UPDATE users SET email = $2, hashed_password = $3, updated_at = $4
+WHERE id = $1
+RETURNING id, email, created_at, updated_at;
+
 -- name: SearchUser :one
 SELECT * from users
 WHERE email = $1;
 
 -- name: DeleteUsers :exec
-DELETE FROM users;
+TRUNCATE TABLE users CASCADE;

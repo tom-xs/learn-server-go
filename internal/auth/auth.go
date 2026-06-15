@@ -1,9 +1,12 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +17,18 @@ import (
 
 var hashParameters = argon2id.DefaultParams
 var tokenTypeAccess = "chirpy-access"
+var refreshTokenLenght = 32 // 32 Bytes = 256 Bits
+
+func MakeRefreshToken() string {
+	key := make([]byte, refreshTokenLenght)
+	randomInt, err := rand.Read(key)
+	if err != nil {
+		log.Printf("Unable to generate randomInt: %v", err)
+		return ""
+	}
+	intToString := strconv.Itoa(randomInt)
+	return hex.EncodeToString([]byte(intToString))
+}
 
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := argon2id.CreateHash(password, hashParameters)
@@ -70,12 +85,12 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(userID uuid.UUID, tokenSecret string) (string, error) {
 	signingKey := []byte(tokenSecret)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    tokenTypeAccess,
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		Subject:   userID.String(),
 	})
 	return token.SignedString(signingKey)
