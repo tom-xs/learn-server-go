@@ -3,6 +3,8 @@ package auth
 import (
 	"errors"
 	"log"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/alexedwards/argon2id"
@@ -23,6 +25,15 @@ func HashPassword(password string) (string, error) {
 
 func CheckPasswordHash(password, hash string) (bool, error) {
 	return argon2id.ComparePasswordAndHash(password, hash)
+}
+
+func GetBearerToken(headers http.Header) (string, error) {
+	headerString := headers.Get("Authorization")
+	token, found := strings.CutPrefix(headerString, "Bearer ")
+	if !found {
+		return "", errors.New("Bearer token not found")
+	}
+	return token, nil
 }
 
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {

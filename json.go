@@ -23,8 +23,6 @@ type jsonResponse struct {
 }
 
 func respondJsonPost(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
 	decoder := json.NewDecoder(r.Body)
 	var req chirpRequest
 

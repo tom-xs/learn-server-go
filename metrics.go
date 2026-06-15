@@ -13,6 +13,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQuery        *database.Queries
 	platform       string
+	jwtSecret      string
 }
 
 func handleHealthz(writer http.ResponseWriter, req *http.Request) {

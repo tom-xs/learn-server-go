@@ -11,7 +11,7 @@ import (
 	"github.com/tom-xs/learn-server-go/internal/database"
 )
 
-type userResponse struct {
+type userCreationResponse struct {
 	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -24,8 +24,6 @@ func (cfg *apiConfig) handleUserCreation(w http.ResponseWriter, r *http.Request)
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-
-	defer r.Body.Close()
 
 	var userInfo userRequest
 	decoder := json.NewDecoder(r.Body)
@@ -61,7 +59,7 @@ func (cfg *apiConfig) handleUserCreation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	respondWithJson(w, http.StatusCreated, userResponse{
+	respondWithJson(w, http.StatusCreated, userCreationResponse{
 		user.ID,
 		user.CreatedAt,
 		user.UpdatedAt,

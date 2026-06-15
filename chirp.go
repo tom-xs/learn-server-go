@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tom-xs/learn-server-go/internal/auth"
 	"github.com/tom-xs/learn-server-go/internal/database"
 )
 
@@ -24,11 +25,19 @@ type chirpResponse struct {
 
 func (cfg *apiConfig) handleChirpCreation(w http.ResponseWriter, r *http.Request) {
 	type chirpRequest struct {
-		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
+		Body string `json:"body"`
 	}
 
-	defer r.Body.Close()
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
+		return
+	}
 
 	var chirp chirpRequest
 	decoder := json.NewDecoder(r.Body)
@@ -39,7 +48,7 @@ func (cfg *apiConfig) handleChirpCreation(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err := validateChirp(chirp.Body)
+	err = validateChirp(chirp.Body)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLongChirp):
@@ -53,13 +62,13 @@ func (cfg *apiConfig) handleChirpCreation(w http.ResponseWriter, r *http.Request
 
 	parameters := database.CreateChirpParams{
 		Body:   chirp.Body,
-		UserID: chirp.UserID,
+		UserID: userID,
 	}
 
 	user, err := cfg.dbQuery.CreateChirp(r.Context(), parameters)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("Error adding user to DB: %v", err)
+		log.Printf("Error adding chirp to DB: %v", err)
 		return
 	}
 
