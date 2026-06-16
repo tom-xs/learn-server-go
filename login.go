@@ -22,6 +22,7 @@ type userLoginResponse struct {
 	Email        string    `json:"email"`
 	Token        string    `json:"token"`
 	RefreshToken string    `json:"refresh_token"`
+	IsUserRed    bool      `json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) handleTokenRevoke(w http.ResponseWriter, r *http.Request) {
@@ -139,5 +140,6 @@ func (cfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
 		Email:        user.Email,
 		Token:        token,
 		RefreshToken: refreshToken.Token,
+		IsUserRed:    user.IsChirpyRed.Bool,
 	})
 }

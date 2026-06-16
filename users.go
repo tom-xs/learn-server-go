@@ -11,18 +11,61 @@ import (
 	"github.com/tom-xs/learn-server-go/internal/database"
 )
 
+var upgradeEvent = "user.upgraded"
+
 type userRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type userCreationResponse struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Email       string    `json:"email"`
+	IsChirpyRed bool      `json:"is_chirpy_red"`
 }
 
+func (cfg *apiConfig) handleUserUpgrade(w http.ResponseWriter, r *http.Request) {
+	type webHookRequest struct {
+		Event string `json:"event"`
+		Data  struct {
+			UserID uuid.UUID `json:"user_id"`
+		} `json:"data"`
+	}
+
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil || apiKey != cfg.polkaKey {
+		w.WriteHeader(http.StatusUnauthorized)
+		log.Printf("APIKey not authorized: %v", err)
+		return
+	}
+
+	var hook webHookRequest
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&hook); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("Error while decoding request: %v", err)
+		return
+	}
+
+	if hook.Event != upgradeEvent {
+		w.WriteHeader(http.StatusNoContent)
+		log.Printf("Weird event: %v", hook.Event)
+		return
+	}
+
+	if hook.Event == upgradeEvent {
+		if err := cfg.dbQuery.UpgradesUser(r.Context(), hook.Data.UserID); err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			log.Printf("User not found: %v", hook.Event)
+			return
+		} else {
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}
+
+}
 func (cfg *apiConfig) handleUserUpdate(w http.ResponseWriter, r *http.Request) {
 	accessToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
@@ -116,5 +159,6 @@ func (cfg *apiConfig) handleUserCreation(w http.ResponseWriter, r *http.Request)
 		user.CreatedAt,
 		user.UpdatedAt,
 		user.Email,
+		user.IsChirpyRed.Bool,
 	})
 }

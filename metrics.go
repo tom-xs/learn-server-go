@@ -14,6 +14,7 @@ type apiConfig struct {
 	dbQuery        *database.Queries
 	platform       string
 	jwtSecret      string
+	polkaKey       string
 }
 
 func handleHealthz(writer http.ResponseWriter, req *http.Request) {

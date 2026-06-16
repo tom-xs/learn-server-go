@@ -19,8 +19,17 @@ RETURNING *;
 SELECT * from chirp
 WHERE id = $1;
 
--- name: GetAllChirps :many
-SELECT * from chirp ORDER BY created_at;
+-- name: GetChirpsFrom :many
+SELECT * from chirp
+WHERE user_id = $1
+ORDER BY created_at ASC;
 
--- name: DeleteChirps :exec
+-- name: GetAllChirps :many
+SELECT * from chirp ORDER BY created_at ASC;
+
+-- name: DeleteChirp :exec
+DELETE from chirp
+WHERE id = $1;
+
+-- name: DeleteAllChirps :exec
 DELETE FROM chirp;

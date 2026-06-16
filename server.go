@@ -17,6 +17,7 @@ func main() {
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
 	jwtSecret := os.Getenv("SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Printf("Unable to connect DB: %v", err)
@@ -29,6 +30,7 @@ func main() {
 		dbQueries,
 		platform,
 		jwtSecret,
+		polkaKey,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir(".")))))
@@ -39,11 +41,13 @@ func main() {
 	mux.HandleFunc("POST /admin/reset/", apiCfg.handleReset)
 	mux.HandleFunc("POST /api/validate_chirp/", respondJsonPost)
 	mux.HandleFunc("POST /api/users/", apiCfg.handleUserCreation)
-	mux.HandleFunc("PUT /api/users/", apiCfg.handleUserUpdate)
 	mux.HandleFunc("POST /api/chirps/", apiCfg.handleChirpCreation)
 	mux.HandleFunc("POST /api/login/", apiCfg.handleLogin)
 	mux.HandleFunc("POST /api/refresh/", apiCfg.handleTokenRefresh)
 	mux.HandleFunc("POST /api/revoke/", apiCfg.handleTokenRevoke)
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.handleUserUpgrade)
+	mux.HandleFunc("PUT /api/users/", apiCfg.handleUserUpdate)
+	mux.HandleFunc("DELETE /api/chirps/{id}", apiCfg.handleChirpDeletion)
 
 	server := &http.Server{
 		Addr:    ":" + port,

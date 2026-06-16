@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,13 +20,8 @@ var refreshTokenLenght = 32 // 32 Bytes = 256 Bits
 
 func MakeRefreshToken() string {
 	key := make([]byte, refreshTokenLenght)
-	randomInt, err := rand.Read(key)
-	if err != nil {
-		log.Printf("Unable to generate randomInt: %v", err)
-		return ""
-	}
-	intToString := strconv.Itoa(randomInt)
-	return hex.EncodeToString([]byte(intToString))
+	rand.Read(key)
+	return hex.EncodeToString(key)
 }
 
 func HashPassword(password string) (string, error) {
@@ -40,6 +34,15 @@ func HashPassword(password string) (string, error) {
 
 func CheckPasswordHash(password, hash string) (bool, error) {
 	return argon2id.ComparePasswordAndHash(password, hash)
+}
+
+func GetAPIKey(headers http.Header) (string, error) {
+	headerString := headers.Get("Authorization")
+	key, found := strings.CutPrefix(headerString, "ApiKey ")
+	if !found {
+		return "", errors.New("ApiKey not found")
+	}
+	return key, nil
 }
 
 func GetBearerToken(headers http.Header) (string, error) {
